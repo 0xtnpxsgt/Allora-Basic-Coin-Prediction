@@ -1,11 +1,47 @@
 #!/bin/bash
 
+# Install Packages
+sudo apt update && sudo apt upgrade -y
+
+sudo apt install ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev curl git wget make jq build-essential pkg-config lsb-release libssl-dev libreadline-dev libffi-dev gcc screen unzip lz4 -y
+
+# Install Python3
+sudo apt install python3 -y
+python3 --version
+
+sudo apt install python3-pip -y
+pip3 --version
+
+# Install Docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+docker --version
+
+# Install Docker-Compose
+VER=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+
+curl -L "https://github.com/docker/compose/releases/download/$VER/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+# Docker permission to the user
+sudo groupadd docker
+sudo usermod -aG docker $USER
+
 # Clone the repository
 git clone https://github.com/allora-network/basic-coin-prediction-node
 cd basic-coin-prediction-node || exit
 
 # Copy the .env.example to .env
 cp .env.example .env
+
+# Copy config.example.json to config.json
+cp config.example.json config.json
 
 # Function to update .env file with user input
 update_env() {
@@ -14,13 +50,23 @@ update_env() {
   sed -i "s/^$key=.*/$key=$value/" .env
 }
 
+# Function to update config.json with user input
+update_config() {
+  key=$1
+  value=$2
+  sed -i "s/\"$key\": \".*\"/\"$key\": \"$value\"/" config.json
+}
+
 # Prompt user for the necessary input
 echo "Please select a TOKEN from the list below:"
 PS3="Enter your choice (1-5): "
 options=("ETH" "SOL" "BTC" "BNB" "ARB")
+topic_ids=("1" "3" "5" "8" "9")
 select opt in "${options[@]}"; do
   if [[ -n $opt ]]; then
     update_env "TOKEN" "$opt"
+    update_config "Token" "$opt"
+    update_config "topicId" "${topic_ids[REPLY-1]}"
     break
   fi
 done
@@ -82,19 +128,9 @@ else
   update_env "CG_API_KEY" ""
 fi
 
-# Copy config.example.json to config.json
-cp config.example.json config.json
-
 # Prompt for wallet name and seed phrase
 read -p "Enter your wallet name: " wallet_name
 read -p "Enter your seed phrase: " seed_phrase
-
-# Function to update config.json file with user input
-update_config() {
-  key=$1
-  value=$2
-  sed -i "s/\"$key\": \".*\"/\"$key\": \"$value\"/" config.json
-}
 
 # Update config.json with wallet name and seed phrase
 update_config "addressKeyName" "$wallet_name"
@@ -105,9 +141,9 @@ chmod +x init.config
 ./init.config
 
 # Start Docker containers and build
-docker compose up --build -d
+docker-compose up --build -d
 
-# Output completion message - Installation Complete
+# Output completion message
 echo "Your .env and config.json files have been updated with your choices!"
 echo "Docker containers have been started. To check logs, run:"
-echo "docker compose -logs worker"
+echo "docker-compose logs worker"
