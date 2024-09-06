@@ -24,9 +24,9 @@ docker --version
 # Install Docker-Compose
 VER=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
 
-curl -L "https://github.com/docker/compose/releases/download/$VER/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/$VER/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
-chmod +x /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 docker-compose --version
 
 # Docker permission to the user
@@ -50,11 +50,18 @@ update_env() {
   sed -i "s/^$key=.*/$key=$value/" .env
 }
 
-# Function to update config.json with user input
+# Function to update config.json with user input using jq
 update_config() {
   key=$1
   value=$2
-  sed -i "s/\"$key\": \".*\"/\"$key\": \"$value\"/" config.json
+  jq --arg v "$value" ".worker[0].parameters.$key = \$v" config.json > config.tmp.json && mv config.tmp.json config.json
+}
+
+# Function to update topicId in config.json as an integer
+update_topic_id() {
+  key=$1
+  value=$2
+  jq ".worker[0].$key = $value" config.json > config.tmp.json && mv config.tmp.json config.json
 }
 
 # Prompt user for the necessary input
@@ -66,7 +73,7 @@ select opt in "${options[@]}"; do
   if [[ -n $opt ]]; then
     update_env "TOKEN" "$opt"
     update_config "Token" "$opt"
-    update_config "topicId" "${topic_ids[REPLY-1]}"
+    update_topic_id "topicId" "${topic_ids[REPLY-1]}"
     break
   fi
 done
@@ -133,8 +140,8 @@ read -p "Enter your wallet name: " wallet_name
 read -p "Enter your seed phrase: " seed_phrase
 
 # Update config.json with wallet name and seed phrase
-update_config "addressKeyName" "$wallet_name"
-update_config "addressRestoreMnemonic" "$seed_phrase"
+jq --arg wallet "$wallet_name" --arg seed "$seed_phrase" \
+'.wallet.addressKeyName = $wallet | .wallet.addressRestoreMnemonic = $seed' config.json > config.tmp.json && mv config.tmp.json config.json
 
 # Make init.config executable and run it
 chmod +x init.config
@@ -144,6 +151,5 @@ chmod +x init.config
 docker-compose up --build -d
 
 # Output completion message
-echo "Your .env and config.json files have been updated with your choices!"
-echo "Docker containers have been started. To check logs, run:"
-echo "docker-compose logs worker"
+echo "Your worker node have been started. To check logs, run:"
+echo "docker logs -f worker"
