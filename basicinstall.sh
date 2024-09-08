@@ -79,7 +79,7 @@ select opt in "${options[@]}"; do
 done
 
 # Prompt for TRAINING_DAYS
-read -p "Enter the number of TRAINING_DAYS (e.g., 2, 31): " training_days
+read -p "Enter the number of TRAINING_DAYS (Select: 2, 31): " training_days
 update_env "TRAINING_DAYS" "$training_days"
 
 # Prompt for TIMEFRAME based on the training days
@@ -91,7 +91,7 @@ elif [[ $training_days -le 30 ]]; then
 else
   echo "Use a TIMEFRAME of >= 4d"
 fi
-read -p "Enter the TIMEFRAME (e.g., 30min, 4h, 4d): " timeframe
+read -p "Enter the TIMEFRAME (Select:, 30min, 4h, 4d): " timeframe
 update_env "TIMEFRAME" "$timeframe"
 
 # Prompt for MODEL
