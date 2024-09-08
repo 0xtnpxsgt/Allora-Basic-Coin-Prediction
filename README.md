@@ -11,7 +11,7 @@ Storage: SSD or NVMe with at least 5GB of space.
 
 ## Clean Docker First
 ```bash
-docker symtem prune
+docker system prune
 ```
 
 ## Automatic Installtion:
