@@ -148,7 +148,7 @@ chmod +x init.config
 ./init.config
 
 # Start Docker containers and build
-docker-compose up --build -d
+docker compose up --build -d
 
 # Output completion message
 echo "Your worker node have been started. To check logs, run:"
