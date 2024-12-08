@@ -4,17 +4,22 @@
         "addressRestoreMnemonic": "",
         "alloraHomeDir": "",
         "gas": "auto",
-        "gasAdjustment": 1.5,
+        "gasAdjustment": 1.2,
+        "gasPrices": "10",
+        "gasPriceUpdateInterval": 60,
+        "maxFees": 25000000,
         "nodeRpc": "https://allora-rpc.testnet.allora.network",
         "maxRetries": 5,
         "retryDelay": 3,
         "accountSequenceRetryDelay": 5,
-        "submitTx": true
+        "submitTx": true,
+        "blockDurationEstimated": 10,
+        "windowCorrectionFactor": 0.8
     },
     "worker": [
         {
             "topicId": 1,
-            "inferenceEntrypointName": "api-worker-reputer",
+            "inferenceEntrypointName": "apiAdapter",
             "loopSeconds": 5,
             "parameters": {
                 "InferenceEndpoint": "http://inference:8000/inference/{Token}",
